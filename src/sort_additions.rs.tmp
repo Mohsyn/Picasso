@@ -1,0 +1,52 @@
+impl Sort {
+    pub fn by_name(self) -> bool {
+        matches!(self, Sort::Name)
+    }
+
+    /// Date-based sorts use the day headings and timeline strip in the grid.
+    pub fn by_date(self) -> bool {
+        matches!(
+            self,
+            Sort::DateNewest
+                | Sort::DateOldest
+                | Sort::DateCreatedNewest
+                | Sort::DateCreatedOldest
+                | Sort::DateModifiedNewest
+                | Sort::DateModifiedOldest
+        )
+    }
+
+    pub fn code(self) -> &'static str {
+        match self {
+            Sort::DateNewest => "date-newest",
+            Sort::DateOldest => "date-oldest",
+            Sort::Name => "name",
+            Sort::SizeSmallest => "size-smallest",
+            Sort::SizeLargest => "size-largest",
+            Sort::DateCreatedNewest => "created-newest",
+            Sort::DateCreatedOldest => "created-oldest",
+            Sort::DateModifiedNewest => "modified-newest",
+            Sort::DateModifiedOldest => "modified-oldest",
+            Sort::Extension => "extension",
+            Sort::Colors => "colors",
+        }
+    }
+
+    pub fn from_code(code: &str) -> Option<Sort> {
+        [
+            Sort::DateNewest,
+            Sort::DateOldest,
+            Sort::Name,
+            Sort::SizeSmallest,
+            Sort::SizeLargest,
+            Sort::DateCreatedNewest,
+            Sort::DateCreatedOldest,
+            Sort::DateModifiedNewest,
+            Sort::DateModifiedOldest,
+            Sort::Extension,
+            Sort::Colors,
+        ]
+        .into_iter()
+        .find(|sort| sort.code() == code)
+    }
+}

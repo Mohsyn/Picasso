@@ -1,0 +1,3 @@
+/// How far apart, in seconds, two shots of one group can be by default.
+/// Five minutes covers bursts and sequences taken in quick succession.
+pub const DEFAULT_WINDOW: i64 = 300;

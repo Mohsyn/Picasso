@@ -1,0 +1,6 @@
+//! Library records shared by the database, the scanner, and the UI.
+
+use std::path::Path;
+use std::sync::atomic::{AtomicU32, Ordering};
+
+// ... existing file content is retained below
