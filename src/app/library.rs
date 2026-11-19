@@ -743,7 +743,7 @@ impl PicassoApp {
                     self.select_starred();
                 }
                 let mut sort = self.sort;
-                let shown = tr(match sort {
+                let shown = match sort {
                     Sort::None => "Sort: None".to_string(),
                     Sort::DateNewest => format!("{} ↑", tr("Sort by Date")),
                     Sort::DateOldest => format!("{} ↓", tr("Sort by Date, oldest")),
@@ -756,7 +756,7 @@ impl PicassoApp {
                     Sort::Extension => tr("Sort by Extension").to_string(),
                     Sort::Colors => tr("Sort by Colors").to_string(),
                     Sort::Name => tr("Sort by Name").to_string(),
-                });
+                };
                 let picker = egui::ComboBox::from_id_salt("sort").selected_text(shown).show_ui(ui, |ui| {
                     ui.selectable_value(&mut sort, Sort::None, "Sort: None");
                     ui.selectable_value(&mut sort, Sort::DateNewest, format!("{} ↑", tr("Sort by Date")));
