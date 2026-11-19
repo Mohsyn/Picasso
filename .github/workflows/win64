@@ -1,0 +1,82 @@
+# Build, test, and package only the x64 Windows version of Picasso.
+name: Winx64
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winx64-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  windows-x64:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.SOURCE_COMMIT }}
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: "true"
+
+      - name: Test
+        run: cargo test --release --locked
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package
+        id: package
+        shell: pwsh
+        run: |
+          $match = Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' |
+            Select-Object -First 1
+          $version = $match.Matches.Groups[1].Value
+
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $label = $env:GITHUB_REF_NAME.TrimStart('v')
+          } else {
+            $label = "$version-$($env:SOURCE_COMMIT.Substring(0, 7))"
+          }
+
+          $name = "picasso-$label-windows-x64"
+
+          python scripts/third-party-notices.py `
+            --target x86_64-pc-windows-msvc `
+            -o THIRD-PARTY-NOTICES.txt
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+          New-Item -ItemType Directory -Force -Path dist, "staging/$name" | Out-Null
+          Copy-Item target/release/picasso.exe "dist/$name.exe"
+          Copy-Item target/release/picasso.exe, README.md, README_zh-TW.md, `
+            CHANGELOG.md, LICENSE, THIRD-PARTY-NOTICES.txt "staging/$name/"
+          Compress-Archive -Path "staging/$name" -DestinationPath "dist/$name.zip"
+
+          Get-ChildItem dist | Format-Table Name, Length
+          "name=$name" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: dist/*
+          if-no-files-found: error
