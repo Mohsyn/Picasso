@@ -1844,7 +1844,7 @@ impl PicassoApp {
                 .filter_map(|id| self.photos.iter().find(|photo| photo.id == *id))
                 .map(|photo| photo.bytes)
                 .sum();
-            trf("{} selected · {}", &[&self.selection.len(), &crate::types::format_bytes(bytes)])
+            format!("{} selected · {}", self.selection.len(), crate::types::format_bytes(bytes))
         };
         if !self.activity.is_empty() {
             text.push_str("  ·  ");

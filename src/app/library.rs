@@ -1253,7 +1253,7 @@ fn build_layout(photos: &[Photo], tracks: usize, sort: Sort, width: f32, thumb: 
                 index += 1;
             }
             rows.push(GridRow::Header {
-                title: if extension.is_empty() { tr("Files without extension").to_string() } else { format!("{} · .{extension}", tr("File type")) },
+                title: if extension.is_empty() { "Files without extension".to_string() } else { format!("File type · .{extension}") },
                 y,
                 first: start,
             });

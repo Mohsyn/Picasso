@@ -153,7 +153,7 @@ mod tests {
             shot(2, 101, 0b1110),
             shot(3, 103, 0b1100),
             // Alike but a minute later: a new start.
-            shot(4, 170, 0b1100),
+            shot(4, 170, 0b1010),
             // Right after, but nothing like it.
             shot(5, 171, u64::MAX),
             shot(6, 172, u64::MAX - 1),
