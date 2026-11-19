@@ -776,12 +776,7 @@ impl PicassoApp {
                 }
                 ui.separator();
                 let mut stack = self.stack_mode;
-                let stack_label = match stack {
-                    None => tr("Stacks: Off"),
-                    Some(crate::burst::StackMode::Time) => tr("Stacks: Within 5 minutes"),
-                    Some(crate::burst::StackMode::LookAlike) => tr("Stacks: Look-alikes"),
-                };
-                egui::ComboBox::from_id_salt("stack-mode").selected_text(stack_label).show_ui(ui, |ui| {
+                egui::ComboBox::from_id_salt("stack-mode").selected_text(tr("Stacks")).show_ui(ui, |ui| {
                     ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
                     ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
                     ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
