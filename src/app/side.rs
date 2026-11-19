@@ -173,29 +173,59 @@ impl PicassoApp {
     fn side_ai_info(&mut self, ui: &mut egui::Ui, photo: &Photo) {
         self.side_preview(ui, photo);
         ui.add_space(8.0);
-        let metadata = super::ai_metadata::read(std::path::Path::new(&photo.path));
-        if metadata.format.is_empty() {
+        let path = std::path::Path::new(&photo.path);
+        let metadata = super::ai_metadata::read(path);
+        if !metadata.has_data() {
             ui.label(egui::RichText::new("No AI generation metadata found.").color(theme::muted()));
         } else {
-            ui.label(egui::RichText::new(metadata.format.clone()).strong());
+            ui.label(egui::RichText::new(&metadata.format).strong());
             ui.add_space(4.0);
-            let shown = metadata.workflow.as_deref().unwrap_or(&metadata.text);
-            egui::ScrollArea::vertical().max_height((ui.available_height() - ACTION_BAR - 48.0).max(80.0)).show(ui, |ui| {
+            if !metadata.fields.is_empty() {
+                egui::Grid::new(("ai-fields", photo.id)).num_columns(2).spacing(Vec2::new(10.0, 5.0)).show(ui, |ui| {
+                    for (label, value) in &metadata.fields {
+                        ui.label(egui::RichText::new(label).size(11.5).color(theme::muted()));
+                        ui.add(egui::Label::new(egui::RichText::new(value).size(12.0).color(theme::text())).wrap());
+                        ui.end_row();
+                    }
+                });
+            }
+            if !metadata.nodes.is_empty() {
+                ui.add_space(8.0);
+                ui.label(egui::RichText::new("Workflow").size(12.0).strong().color(theme::muted()));
+                for node in &metadata.nodes {
+                    let title = format!("{}  ·  {}", node.id, node.name);
+                    egui::CollapsingHeader::new(title).id_salt(("ai-node", photo.id, &node.id)).show(ui, |ui| {
+                        for input in &node.inputs {
+                            ui.label(egui::RichText::new(&input.name).size(11.0).color(theme::muted()));
+                            ui.add(egui::Label::new(egui::RichText::new(&input.value).monospace().size(11.0)).wrap());
+                            ui.add_space(3.0);
+                        }
+                    });
+                }
+            } else if metadata.fields.is_empty() {
+                let shown = metadata.workflow.as_deref().unwrap_or(&metadata.text);
                 ui.add(egui::Label::new(egui::RichText::new(shown).monospace().size(11.0)).wrap());
-            });
+            }
+            if let Some(warning) = &metadata.warning {
+                ui.add_space(6.0);
+                ui.add(egui::Label::new(egui::RichText::new(warning).size(11.0).color(theme::muted())).wrap());
+            }
         }
         ui.add_space(8.0);
         ui.horizontal(|ui| {
-            if ui.button("⧉").on_hover_text("Copy AI metadata").clicked() {
-                ui.ctx().copy_text(metadata.workflow.clone().unwrap_or_else(|| metadata.text.clone()));
+            let copy = ui.add_enabled(metadata.has_data(), egui::Button::new("⧉")).on_hover_text("Copy AI metadata");
+            if copy.clicked() {
+                ui.ctx().copy_text(metadata.copy_text());
             }
-            if ui.button("⇩").on_hover_text("Save AI metadata sidecar").clicked() {
-                if let Err(error) = super::ai_metadata::save(std::path::Path::new(&photo.path), &metadata) {
+            let save = ui.add_enabled(metadata.has_data(), egui::Button::new("⇩")).on_hover_text("Save AI metadata sidecar");
+            if save.clicked() {
+                if let Err(error) = super::ai_metadata::save(path, &metadata) {
                     self.activity = format!("Could not save metadata: {error}");
                 }
             }
-            if ui.button("⌫").on_hover_text("Delete AI metadata sidecar").clicked() {
-                if let Err(error) = super::ai_metadata::delete(std::path::Path::new(&photo.path)) {
+            let delete = ui.add_enabled(super::ai_metadata::sidecar_exists(path), egui::Button::new("⌫")).on_hover_text("Delete AI metadata sidecar");
+            if delete.clicked() {
+                if let Err(error) = super::ai_metadata::delete(path) {
                     self.activity = format!("Could not delete metadata: {error}");
                 }
             }
