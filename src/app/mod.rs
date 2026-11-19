@@ -1,6 +1,8 @@
 //! Picasso application state: library navigation, viewer, and background jobs.
 
 mod about;
+mod ai_metadata;
+mod ai_metadata;
 mod dates;
 mod dupes;
 mod editor;
@@ -657,7 +659,7 @@ impl PicassoApp {
             photos: Vec::new(),
             index_of: HashMap::new(),
             nav: Nav::Library,
-            sort: Sort::DateNewest,
+            sort: Sort::None,
             stack_mode: None,
             edited_only: false,
             search: String::new(),
@@ -1834,7 +1836,17 @@ impl PicassoApp {
                 self.open_export(&ids);
             }
         }
-        let mut text = photo_count(self.photos.len());
+        let mut text = if self.selection.is_empty() {
+            photo_count(self.photos.len())
+        } else {
+            let bytes: u64 = self
+                .selection
+                .iter()
+                .filter_map(|id| self.photos.iter().find(|photo| photo.id == *id))
+                .map(|photo| photo.bytes)
+                .sum();
+            trf("{} selected · {}", &[&self.selection.len(), &crate::types::format_bytes(bytes)])
+        };
         if !self.activity.is_empty() {
             text.push_str("  ·  ");
             text.push_str(&self.activity);

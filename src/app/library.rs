@@ -222,7 +222,7 @@ impl PicassoApp {
             return;
         }
         let full = ui.available_rect_before_wrap();
-        let strip_w = if self.sort.by_name() { 0.0 } else { STRIP_W };
+        let strip_w = if self.sort.has_timeline() { STRIP_W } else { 0.0 };
         let grid_rect = Rect::from_min_max(full.min, Pos2::new(full.max.x - strip_w, full.max.y));
         self.ensure_layout(grid_rect.width(), tracks.len());
         let layout = Rc::clone(&self.layout.as_ref().unwrap().layout);
@@ -605,7 +605,7 @@ impl PicassoApp {
             .collect();
         let start = |index: &usize| self.tracks[*index].time_span.map(|(start, _)| start);
         match self.sort {
-            Sort::Name => found.sort_by_key(|index| folder_label(&self.tracks[*index].path).to_lowercase()),
+            Sort::None | Sort::Name => found.sort_by_key(|index| folder_label(&self.tracks[*index].path).to_lowercase()),
             Sort::DateNewest => found.sort_by_key(|index| std::cmp::Reverse(start(index))),
             Sort::DateOldest => found.sort_by_key(start),
             _ => found.sort_by_key(|index| folder_label(&self.tracks[*index].path).to_lowercase()),
@@ -744,27 +744,29 @@ impl PicassoApp {
                 }
                 let mut sort = self.sort;
                 let shown = tr(match sort {
-                    Sort::DateNewest => "Sort by Date",
-                    Sort::DateOldest => "Sort by Date, oldest",
-                    Sort::CreatedNewest => "Sort by Date created",
-                    Sort::CreatedOldest => "Sort by Date created, oldest",
-                    Sort::ModifiedNewest => "Sort by Date modified",
-                    Sort::ModifiedOldest => "Sort by Date modified, oldest",
-                    Sort::SizeLargest => "Sort by Size",
-                    Sort::SizeSmallest => "Sort by Size, smallest",
+                    Sort::None => "Sort: None",
+                    Sort::DateNewest => "Sort by Date ↑",
+                    Sort::DateOldest => "Sort by Date ↓",
+                    Sort::CreatedNewest => "Sort by Created ↑",
+                    Sort::CreatedOldest => "Sort by Created ↓",
+                    Sort::ModifiedNewest => "Sort by Modified ↑",
+                    Sort::ModifiedOldest => "Sort by Modified ↓",
+                    Sort::SizeLargest => "Sort by Size ↓",
+                    Sort::SizeSmallest => "Sort by Size ↑",
                     Sort::Extension => "Sort by Extension",
                     Sort::Colors => "Sort by Colors",
                     Sort::Name => "Sort by Name",
                 });
                 let picker = egui::ComboBox::from_id_salt("sort").selected_text(shown).show_ui(ui, |ui| {
-                    ui.selectable_value(&mut sort, Sort::DateNewest, tr("Sort by Date"));
-                    ui.selectable_value(&mut sort, Sort::DateOldest, tr("Sort by Date, oldest"));
-                    ui.selectable_value(&mut sort, Sort::CreatedNewest, tr("Sort by Date created"));
-                    ui.selectable_value(&mut sort, Sort::CreatedOldest, tr("Sort by Date created, oldest"));
-                    ui.selectable_value(&mut sort, Sort::ModifiedNewest, tr("Sort by Date modified"));
-                    ui.selectable_value(&mut sort, Sort::ModifiedOldest, tr("Sort by Date modified, oldest"));
-                    ui.selectable_value(&mut sort, Sort::SizeLargest, tr("Sort by Size"));
-                    ui.selectable_value(&mut sort, Sort::SizeSmallest, tr("Sort by Size, smallest"));
+                    ui.selectable_value(&mut sort, Sort::None, tr("Sort: None"));
+                    ui.selectable_value(&mut sort, Sort::DateNewest, tr("Sort by Date ↑"));
+                    ui.selectable_value(&mut sort, Sort::DateOldest, tr("Sort by Date ↓"));
+                    ui.selectable_value(&mut sort, Sort::CreatedNewest, tr("Sort by Created ↑"));
+                    ui.selectable_value(&mut sort, Sort::CreatedOldest, tr("Sort by Created ↓"));
+                    ui.selectable_value(&mut sort, Sort::ModifiedNewest, tr("Sort by Modified ↑"));
+                    ui.selectable_value(&mut sort, Sort::ModifiedOldest, tr("Sort by Modified ↓"));
+                    ui.selectable_value(&mut sort, Sort::SizeLargest, tr("Sort by Size ↓"));
+                    ui.selectable_value(&mut sort, Sort::SizeSmallest, tr("Sort by Size ↑"));
                     ui.selectable_value(&mut sort, Sort::Extension, tr("Sort by Extension"));
                     ui.selectable_value(&mut sort, Sort::Colors, tr("Sort by Colors"));
                     ui.selectable_value(&mut sort, Sort::Name, tr("Sort by Name"));
@@ -778,26 +780,25 @@ impl PicassoApp {
         });
         ui.horizontal_wrapped(|ui| {
             let mut stack = self.stack_mode;
-            let picker = egui::ComboBox::from_id_salt("stack-mode").selected_text(tr("Stacks")).show_ui(ui, |ui| {
+            let mut edited = self.edited_only;
+            let picker = egui::ComboBox::from_id_salt("grouping").selected_text(tr("Grouping")).show_ui(ui, |ui| {
                 ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
                 ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
                 ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
+                ui.separator();
+                ui.checkbox(&mut edited, tr("Edited only"));
             });
-            theme::name_picker(&picker.response, tr("Stacks"), tr("Stacks").to_owned());
+            theme::name_picker(&picker.response, tr("Grouping"), tr("Grouping").to_owned());
             if stack != self.stack_mode {
                 self.stack_mode = stack;
                 self.view_epoch = self.view_epoch.wrapping_add(1);
             }
+            if edited != self.edited_only {
+                self.edited_only = edited;
+                self.reload_view();
+            }
         });
         self.trip_header(ui);
-        let stories_tab = matches!(self.nav, Nav::Trip(id) if self.trip_stories.contains(&id));
-        if !matches!(self.nav, Nav::Statistics | Nav::TravelMap | Nav::Trips) && !stories_tab {
-            ui.horizontal_wrapped(|ui| {
-                if ui.checkbox(&mut self.edited_only, tr("Edited only")).changed() {
-                    self.reload_view();
-                }
-            });
-        }
         ui.add_space(6.0);
     }
 
@@ -925,6 +926,30 @@ impl PicassoApp {
                 painter.rect_filled(pill, 5, Color32::from_black_alpha(150));
                 painter.galley(pill.min + Vec2::new(5.0, 2.0), galley, WHITE);
             }
+        }
+        if self.stack_mode == Some(crate::burst::StackMode::Time) {
+            let previous_same = index > 0
+                && self.photos.get(index - 1).is_some_and(|before| before.taken_at > 0 && photo.taken_at > 0 && (before.taken_at - photo.taken_at).abs() <= crate::burst::DEFAULT_WINDOW);
+            if !previous_same {
+                let mut count = 1usize;
+                while self.photos.get(index + count).is_some_and(|next| next.taken_at > 0 && photo.taken_at > 0 && (next.taken_at - self.photos[index + count - 1].taken_at).abs() <= crate::burst::DEFAULT_WINDOW) {
+                    count += 1;
+                }
+                if count > 1 {
+                    let text = count.to_string();
+                    let galley = painter.layout_no_wrap(text, FontId::proportional(11.0), WHITE);
+                    let pill = Rect::from_min_size(image_rect.right_bottom() + Vec2::new(-galley.size().x - 14.0, -galley.size().y - 14.0), galley.size() + Vec2::new(10.0, 4.0));
+                    painter.rect_filled(pill, 5, Color32::from_black_alpha(170));
+                    painter.galley(pill.min + Vec2::new(5.0, 2.0), galley, WHITE);
+                }
+            }
+        }
+        if response.hovered() {
+            let text = crate::types::format_bytes(photo.bytes);
+            let galley = painter.layout_no_wrap(text, FontId::proportional(11.0), WHITE);
+            let pill = Rect::from_min_size(image_rect.right_top() + Vec2::new(-galley.size().x - 14.0, 6.0), galley.size() + Vec2::new(10.0, 4.0));
+            painter.rect_filled(pill, 5, Color32::from_black_alpha(150));
+            painter.galley(pill.min + Vec2::new(5.0, 2.0), galley, WHITE);
         }
         let place_rect = Rect::from_center_size(image_rect.left_bottom() + Vec2::new(14.0, -14.0), Vec2::splat(22.0));
         if photo.place().is_some() {
@@ -1208,13 +1233,38 @@ fn build_layout(photos: &[Photo], tracks: usize, sort: Sort, width: f32, thumb: 
             y += HEADER_H;
         }
     }
-    if sort.by_name() {
+    if matches!(sort, Sort::None | Sort::SizeLargest | Sort::SizeSmallest | Sort::Colors | Sort::Name) {
         let mut offset = 0;
         for chunk in photos.chunks(cols) {
             let indices = offset..offset + chunk.len();
             offset += chunk.len();
             rows.push(GridRow::Photos { indices, y, h: row_h });
             y += row_h;
+        }
+    } else if sort == Sort::Extension {
+        let mut index = 0;
+        while index < photos.len() {
+            let extension = photos[index].filename.rsplit_once('.').map_or("", |(_, ext)| ext).to_ascii_lowercase();
+            let start = index;
+            index += 1;
+            while index < photos.len()
+                && photos[index].filename.rsplit_once('.').map_or("", |(_, ext)| ext).eq_ignore_ascii_case(&extension)
+            {
+                index += 1;
+            }
+            rows.push(GridRow::Header {
+                title: if extension.is_empty() { tr("Files without extension").to_string() } else { format!("{} · .{extension}", tr("File type")) },
+                y,
+                first: start,
+            });
+            y += HEADER_H;
+            let mut cursor = start;
+            while cursor < index {
+                let end = (cursor + cols).min(index);
+                rows.push(GridRow::Photos { indices: cursor..end, y, h: row_h });
+                y += row_h;
+                cursor = end;
+            }
         }
     } else {
         let mut index = 0;

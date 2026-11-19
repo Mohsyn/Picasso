@@ -148,6 +148,7 @@ pub struct Unreadable {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Sort {
+    None,
     DateNewest,
     DateOldest,
     CreatedNewest,
@@ -164,6 +165,10 @@ pub enum Sort {
 impl Sort {
     pub fn by_name(self) -> bool {
         matches!(self, Sort::Name | Sort::Extension)
+    }
+
+    pub fn has_timeline(self) -> bool {
+        matches!(self, Sort::None | Sort::DateNewest | Sort::DateOldest | Sort::CreatedNewest | Sort::CreatedOldest | Sort::ModifiedNewest | Sort::ModifiedOldest | Sort::Colors)
     }
 }
 

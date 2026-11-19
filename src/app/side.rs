@@ -17,6 +17,7 @@ pub(super) enum SidePanel {
     None,
     Info,
     Map,
+    AiInfo,
 }
 
 impl SidePanel {
@@ -24,6 +25,7 @@ impl SidePanel {
         match value {
             Some("info") => Self::Info,
             Some("map") => Self::Map,
+            Some("ai") => Self::AiInfo,
             _ => Self::None,
         }
     }
@@ -33,6 +35,7 @@ impl SidePanel {
             Self::None => "",
             Self::Info => "info",
             Self::Map => "map",
+            Self::AiInfo => "ai",
         }
     }
 }
@@ -69,7 +72,7 @@ impl PicassoApp {
             return;
         }
         ui.horizontal(|ui| {
-            for (panel, label) in [(SidePanel::Info, "Info"), (SidePanel::Map, "Map")] {
+            for (panel, label) in [(SidePanel::Info, "Info"), (SidePanel::Map, "Map"), (SidePanel::AiInfo, "AI Info")] {
                 let on = self.side == panel;
                 let text = egui::RichText::new(tr(label)).color(if on { theme::accent() } else { theme::text() });
                 let button = egui::Button::new(text)
@@ -107,6 +110,7 @@ impl PicassoApp {
             .max_height((ui.available_height() - ACTION_BAR).max(80.0))
             .show(ui, |ui| match self.side {
                 SidePanel::Map => self.side_map(ui, &photo),
+                SidePanel::AiInfo => self.side_ai_info(ui, &photo),
                 _ => self.side_info(ui, &photo),
             });
         self.photo_actions(ui, &photo);
@@ -164,6 +168,38 @@ impl PicassoApp {
         let altitude = altitude_of(exif.as_deref());
         self.location_card(ui, photo, altitude.as_deref());
         ui.add_space(8.0);
+    }
+
+    fn side_ai_info(&mut self, ui: &mut egui::Ui, photo: &Photo) {
+        self.side_preview(ui, photo);
+        ui.add_space(8.0);
+        let metadata = super::ai_metadata::read(std::path::Path::new(&photo.path));
+        if metadata.format.is_empty() {
+            ui.label(egui::RichText::new(tr("No AI generation metadata found.")).color(theme::muted()));
+        } else {
+            ui.label(egui::RichText::new(metadata.format.clone()).strong());
+            ui.add_space(4.0);
+            let shown = metadata.workflow.as_deref().unwrap_or(&metadata.text);
+            egui::ScrollArea::vertical().max_height((ui.available_height() - ACTION_BAR - 48.0).max(80.0)).show(ui, |ui| {
+                ui.add(egui::Label::new(egui::RichText::new(shown).monospace().size(11.0)).wrap());
+            });
+        }
+        ui.add_space(8.0);
+        ui.horizontal(|ui| {
+            if ui.button("⧉").on_hover_text(tr("Copy AI metadata")).clicked() {
+                ui.ctx().copy_text(metadata.workflow.clone().unwrap_or_else(|| metadata.text.clone()));
+            }
+            if ui.button("⇩").on_hover_text(tr("Save AI metadata sidecar")).clicked() {
+                if let Err(error) = super::ai_metadata::save(std::path::Path::new(&photo.path), &metadata) {
+                    self.activity = format!("{}: {error}", tr("Could not save metadata"));
+                }
+            }
+            if ui.button("⌫").on_hover_text(tr("Delete AI metadata sidecar")).clicked() {
+                if let Err(error) = super::ai_metadata::delete(std::path::Path::new(&photo.path)) {
+                    self.activity = format!("{}: {error}", tr("Could not delete metadata"));
+                }
+            }
+        });
     }
 
     /// EXIF rows of `photo`, read in the background on first request.

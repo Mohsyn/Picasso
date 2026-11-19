@@ -18,7 +18,8 @@ pub struct Shot {
 }
 
 /// How far apart, in seconds, two shots of one group can be by default.
-pub const DEFAULT_WINDOW: i64 = 10;
+/// Five minutes, matching the library's "Within 5 minutes" grouping label.
+pub const DEFAULT_WINDOW: i64 = 5 * 60;
 /// How many of the 64 bits two shots of one group can differ in by default.
 pub const DEFAULT_DISTANCE: u32 = 12;
 
@@ -173,6 +174,17 @@ mod tests {
         ];
         assert_eq!(group_by_time(&shots, 300), vec![vec![1, 2]]);
         assert_eq!(group_by_look(&shots, 1), vec![vec![1, 2, 3]]);
+    }
+
+    #[test]
+    fn default_time_window_is_five_minutes_inclusive() {
+        let shots = [
+            Shot { id: 1, taken_at: 1_000, look: 0 },
+            Shot { id: 2, taken_at: 1_000 + DEFAULT_WINDOW, look: 0 },
+            Shot { id: 3, taken_at: 1_000 + DEFAULT_WINDOW + 1, look: 0 },
+        ];
+        assert_eq!(DEFAULT_WINDOW, 300);
+        assert_eq!(group_by_time(&shots, DEFAULT_WINDOW), vec![vec![1, 2]]);
     }
 }
 

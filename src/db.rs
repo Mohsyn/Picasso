@@ -1443,6 +1443,7 @@ fn read_photo(row: &rusqlite::Row<'_>) -> rusqlite::Result<Photo> {
 
 fn order_sql(sort: Sort) -> &'static str {
     match sort {
+        Sort::None => "p.id ASC",
         Sort::DateNewest => "p.taken_at DESC, p.filename COLLATE NOCASE ASC",
         Sort::DateOldest => "p.taken_at ASC, p.filename COLLATE NOCASE ASC",
         // Filesystem birth time is not portable through the existing scanner

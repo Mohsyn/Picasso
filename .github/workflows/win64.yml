@@ -1,5 +1,5 @@
-# Build, test, and package only the x64 Windows version of Picasso.
-name: Winx64
+# Build, test, and publish only the x64 Windows executable of Picasso.
+name: Windows x64 executable
 
 on:
   push:
@@ -59,18 +59,10 @@ jobs:
             $label = "$version-$($env:SOURCE_COMMIT.Substring(0, 7))"
           }
 
-          $name = "picasso-$label-windows-x64"
+          $name = "picasso-$label-windows-x64.exe"
 
-          python scripts/third-party-notices.py `
-            --target x86_64-pc-windows-msvc `
-            -o THIRD-PARTY-NOTICES.txt
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-
-          New-Item -ItemType Directory -Force -Path dist, "staging/$name" | Out-Null
-          Copy-Item target/release/picasso.exe "dist/$name.exe"
-          Copy-Item target/release/picasso.exe, README.md, README_zh-TW.md, `
-            CHANGELOG.md, LICENSE, THIRD-PARTY-NOTICES.txt "staging/$name/"
-          Compress-Archive -Path "staging/$name" -DestinationPath "dist/$name.zip"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target/release/picasso.exe "dist/$name"
 
           Get-ChildItem dist | Format-Table Name, Length
           "name=$name" >> $env:GITHUB_OUTPUT
@@ -78,5 +70,5 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.package.outputs.name }}
-          path: dist/*
+          path: dist/*.exe
           if-no-files-found: error
