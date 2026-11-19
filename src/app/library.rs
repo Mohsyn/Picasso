@@ -771,7 +771,7 @@ impl PicassoApp {
                     ui.selectable_value(&mut sort, Sort::Colors, tr("Sort by Colors"));
                     ui.selectable_value(&mut sort, Sort::Name, tr("Sort by Name"));
                 });
-                theme::name_picker(&picker.response, &shown, shown);
+                theme::name_picker(&picker.response, &shown, shown.clone());
                 if sort != self.sort {
                     self.sort = sort;
                     self.reload_view();
