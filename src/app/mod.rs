@@ -2,7 +2,6 @@
 
 mod about;
 mod ai_metadata;
-mod ai_metadata;
 mod dates;
 mod dupes;
 mod editor;
