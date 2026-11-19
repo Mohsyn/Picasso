@@ -774,18 +774,19 @@ impl PicassoApp {
                     self.sort = sort;
                     self.reload_view();
                 }
-                ui.separator();
-                let mut stack = self.stack_mode;
-                egui::ComboBox::from_id_salt("stack-mode").selected_text(tr("Stacks")).show_ui(ui, |ui| {
-                    ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
-                    ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
-                    ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
-                });
-                if stack != self.stack_mode {
-                    self.stack_mode = stack;
-                    self.view_epoch = self.view_epoch.wrapping_add(1);
-                }
             });
+        });
+        ui.horizontal_wrapped(|ui| {
+            let mut stack = self.stack_mode;
+            egui::ComboBox::from_id_salt("stack-mode").selected_text(tr("Stacks")).show_ui(ui, |ui| {
+                ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
+                ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
+                ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
+            });
+            if stack != self.stack_mode {
+                self.stack_mode = stack;
+                self.view_epoch = self.view_epoch.wrapping_add(1);
+            }
         });
         self.trip_header(ui);
         let stories_tab = matches!(self.nav, Nav::Trip(id) if self.trip_stories.contains(&id));

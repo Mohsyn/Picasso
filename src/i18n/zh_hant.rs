@@ -3,8 +3,6 @@
 pub(super) const TABLE: &[(&str, &str)] = &[
     // Library filters and selection feedback
     ("Edited only", "僅顯示已編輯"),
-    ("Sort by Date", "依日期排序"),
-    ("Sort by Date, oldest", "依日期排序，最舊優先"),
     ("Sort by Date created", "依建立日期排序"),
     ("Sort by Date created, oldest", "依建立日期排序，最舊優先"),
     ("Sort by Date modified", "依修改日期排序"),
@@ -13,7 +11,6 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Sort by Size, smallest", "依大小排序，最小優先"),
     ("Sort by Extension", "依副檔名排序"),
     ("Sort by Colors", "依色彩排序"),
-    ("Sort by Name", "依名稱排序"),
     ("Stacks", "堆疊"),
     ("Stacks: Off", "堆疊：關閉"),
     ("Stacks: Within 5 minutes", "堆疊：五分鐘內"),
