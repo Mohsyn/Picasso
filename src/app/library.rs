@@ -757,7 +757,7 @@ impl PicassoApp {
                     Sort::Colors => tr("Sort by Colors").to_string(),
                     Sort::Name => tr("Sort by Name").to_string(),
                 };
-                let picker = egui::ComboBox::from_id_salt("sort").selected_text(shown).show_ui(ui, |ui| {
+                let picker = egui::ComboBox::from_id_salt("sort").selected_text(shown.clone()).show_ui(ui, |ui| {
                     ui.selectable_value(&mut sort, Sort::None, "Sort: None");
                     ui.selectable_value(&mut sort, Sort::DateNewest, format!("{} ↑", tr("Sort by Date")));
                     ui.selectable_value(&mut sort, Sort::DateOldest, format!("{} ↓", tr("Sort by Date, oldest")));
@@ -771,7 +771,7 @@ impl PicassoApp {
                     ui.selectable_value(&mut sort, Sort::Colors, tr("Sort by Colors"));
                     ui.selectable_value(&mut sort, Sort::Name, tr("Sort by Name"));
                 });
-                theme::name_picker(&picker.response, shown, shown.to_owned());
+                theme::name_picker(&picker.response, &shown, shown);
                 if sort != self.sort {
                     self.sort = sort;
                     self.reload_view();
