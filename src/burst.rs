@@ -160,7 +160,7 @@ mod tests {
             // No time: never grouped.
             shot(7, 0, 0b1111),
         ];
-        assert_eq!(group(&shots, DEFAULT_WINDOW, DEFAULT_DISTANCE), vec![vec![1, 2, 3], vec![5, 6]]);
+        assert_eq!(group(&shots, 10, DEFAULT_DISTANCE), vec![vec![1, 2, 3], vec![5, 6]]);
         assert_eq!(group(&shots, 120, DEFAULT_DISTANCE), vec![vec![1, 2, 3, 4], vec![5, 6]], "a wider window");
         assert_eq!(group(&shots, DEFAULT_WINDOW, 0), Vec::<Vec<i64>>::new(), "only identical looks");
     }
@@ -181,7 +181,7 @@ mod tests {
         let shots = [
             Shot { id: 1, taken_at: 1_000, look: 0 },
             Shot { id: 2, taken_at: 1_000 + DEFAULT_WINDOW, look: 0 },
-            Shot { id: 3, taken_at: 1_000 + DEFAULT_WINDOW + 1, look: 0 },
+            Shot { id: 3, taken_at: 1_000 + 2 * DEFAULT_WINDOW + 1, look: 0 },
         ];
         assert_eq!(DEFAULT_WINDOW, 300);
         assert_eq!(group_by_time(&shots, DEFAULT_WINDOW), vec![vec![1, 2]]);

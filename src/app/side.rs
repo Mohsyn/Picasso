@@ -175,7 +175,7 @@ impl PicassoApp {
         ui.add_space(8.0);
         let metadata = super::ai_metadata::read(std::path::Path::new(&photo.path));
         if metadata.format.is_empty() {
-            ui.label(egui::RichText::new(tr("No AI generation metadata found.")).color(theme::muted()));
+            ui.label(egui::RichText::new("No AI generation metadata found.").color(theme::muted()));
         } else {
             ui.label(egui::RichText::new(metadata.format.clone()).strong());
             ui.add_space(4.0);
@@ -186,17 +186,17 @@ impl PicassoApp {
         }
         ui.add_space(8.0);
         ui.horizontal(|ui| {
-            if ui.button("⧉").on_hover_text(tr("Copy AI metadata")).clicked() {
+            if ui.button("⧉").on_hover_text("Copy AI metadata").clicked() {
                 ui.ctx().copy_text(metadata.workflow.clone().unwrap_or_else(|| metadata.text.clone()));
             }
-            if ui.button("⇩").on_hover_text(tr("Save AI metadata sidecar")).clicked() {
+            if ui.button("⇩").on_hover_text("Save AI metadata sidecar").clicked() {
                 if let Err(error) = super::ai_metadata::save(std::path::Path::new(&photo.path), &metadata) {
-                    self.activity = format!("{}: {error}", tr("Could not save metadata"));
+                    self.activity = format!("Could not save metadata: {error}");
                 }
             }
-            if ui.button("⌫").on_hover_text(tr("Delete AI metadata sidecar")).clicked() {
+            if ui.button("⌫").on_hover_text("Delete AI metadata sidecar").clicked() {
                 if let Err(error) = super::ai_metadata::delete(std::path::Path::new(&photo.path)) {
-                    self.activity = format!("{}: {error}", tr("Could not delete metadata"));
+                    self.activity = format!("Could not delete metadata: {error}");
                 }
             }
         });

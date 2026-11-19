@@ -744,29 +744,29 @@ impl PicassoApp {
                 }
                 let mut sort = self.sort;
                 let shown = tr(match sort {
-                    Sort::None => "Sort: None",
-                    Sort::DateNewest => "Sort by Date ↑",
-                    Sort::DateOldest => "Sort by Date ↓",
-                    Sort::CreatedNewest => "Sort by Created ↑",
-                    Sort::CreatedOldest => "Sort by Created ↓",
-                    Sort::ModifiedNewest => "Sort by Modified ↑",
-                    Sort::ModifiedOldest => "Sort by Modified ↓",
-                    Sort::SizeLargest => "Sort by Size ↓",
-                    Sort::SizeSmallest => "Sort by Size ↑",
-                    Sort::Extension => "Sort by Extension",
-                    Sort::Colors => "Sort by Colors",
-                    Sort::Name => "Sort by Name",
+                    Sort::None => "Sort: None".to_string(),
+                    Sort::DateNewest => format!("{} ↑", tr("Sort by Date")),
+                    Sort::DateOldest => format!("{} ↓", tr("Sort by Date, oldest")),
+                    Sort::CreatedNewest => format!("{} ↑", tr("Sort by Date created")),
+                    Sort::CreatedOldest => format!("{} ↓", tr("Sort by Date created, oldest")),
+                    Sort::ModifiedNewest => format!("{} ↑", tr("Sort by Date modified")),
+                    Sort::ModifiedOldest => format!("{} ↓", tr("Sort by Date modified, oldest")),
+                    Sort::SizeLargest => format!("{} ↓", tr("Sort by Size")),
+                    Sort::SizeSmallest => format!("{} ↑", tr("Sort by Size, smallest")),
+                    Sort::Extension => tr("Sort by Extension").to_string(),
+                    Sort::Colors => tr("Sort by Colors").to_string(),
+                    Sort::Name => tr("Sort by Name").to_string(),
                 });
                 let picker = egui::ComboBox::from_id_salt("sort").selected_text(shown).show_ui(ui, |ui| {
-                    ui.selectable_value(&mut sort, Sort::None, tr("Sort: None"));
-                    ui.selectable_value(&mut sort, Sort::DateNewest, tr("Sort by Date ↑"));
-                    ui.selectable_value(&mut sort, Sort::DateOldest, tr("Sort by Date ↓"));
-                    ui.selectable_value(&mut sort, Sort::CreatedNewest, tr("Sort by Created ↑"));
-                    ui.selectable_value(&mut sort, Sort::CreatedOldest, tr("Sort by Created ↓"));
-                    ui.selectable_value(&mut sort, Sort::ModifiedNewest, tr("Sort by Modified ↑"));
-                    ui.selectable_value(&mut sort, Sort::ModifiedOldest, tr("Sort by Modified ↓"));
-                    ui.selectable_value(&mut sort, Sort::SizeLargest, tr("Sort by Size ↓"));
-                    ui.selectable_value(&mut sort, Sort::SizeSmallest, tr("Sort by Size ↑"));
+                    ui.selectable_value(&mut sort, Sort::None, "Sort: None");
+                    ui.selectable_value(&mut sort, Sort::DateNewest, format!("{} ↑", tr("Sort by Date")));
+                    ui.selectable_value(&mut sort, Sort::DateOldest, format!("{} ↓", tr("Sort by Date, oldest")));
+                    ui.selectable_value(&mut sort, Sort::CreatedNewest, format!("{} ↑", tr("Sort by Date created")));
+                    ui.selectable_value(&mut sort, Sort::CreatedOldest, format!("{} ↓", tr("Sort by Date created, oldest")));
+                    ui.selectable_value(&mut sort, Sort::ModifiedNewest, format!("{} ↑", tr("Sort by Date modified")));
+                    ui.selectable_value(&mut sort, Sort::ModifiedOldest, format!("{} ↓", tr("Sort by Date modified, oldest")));
+                    ui.selectable_value(&mut sort, Sort::SizeLargest, format!("{} ↓", tr("Sort by Size")));
+                    ui.selectable_value(&mut sort, Sort::SizeSmallest, format!("{} ↑", tr("Sort by Size, smallest")));
                     ui.selectable_value(&mut sort, Sort::Extension, tr("Sort by Extension"));
                     ui.selectable_value(&mut sort, Sort::Colors, tr("Sort by Colors"));
                     ui.selectable_value(&mut sort, Sort::Name, tr("Sort by Name"));
@@ -781,14 +781,14 @@ impl PicassoApp {
         ui.horizontal_wrapped(|ui| {
             let mut stack = self.stack_mode;
             let mut edited = self.edited_only;
-            let picker = egui::ComboBox::from_id_salt("grouping").selected_text(tr("Grouping")).show_ui(ui, |ui| {
+            let picker = egui::ComboBox::from_id_salt("grouping").selected_text("Grouping").show_ui(ui, |ui| {
                 ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
                 ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
                 ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
                 ui.separator();
                 ui.checkbox(&mut edited, tr("Edited only"));
             });
-            theme::name_picker(&picker.response, tr("Grouping"), tr("Grouping").to_owned());
+            theme::name_picker(&picker.response, "Grouping", "Grouping".to_owned());
             if stack != self.stack_mode {
                 self.stack_mode = stack;
                 self.view_epoch = self.view_epoch.wrapping_add(1);

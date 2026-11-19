@@ -549,7 +549,7 @@ mod tests {
         window.draw(Vec::new());
         let (reached, unnamed) = tab_through(&mut window, 30);
         assert!(unnamed.is_empty(), "Tab reached controls with no name: {unnamed:?}");
-        for name in ["Search photos", "Settings", "Thumbnail size", "Library", "pics, 12", "Sort by Date", "IMG_000.jpg"] {
+        for name in ["Search photos", "Settings", "Thumbnail size", "Library", "pics, 12", "Sort by Date ↑", "IMG_000.jpg"] {
             assert!(reached.iter().any(|reached| reached == name), "Tab never reached {name}: {reached:?}");
         }
     }
