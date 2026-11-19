@@ -150,12 +150,20 @@ pub struct Unreadable {
 pub enum Sort {
     DateNewest,
     DateOldest,
+    CreatedNewest,
+    CreatedOldest,
+    ModifiedNewest,
+    ModifiedOldest,
+    SizeLargest,
+    SizeSmallest,
+    Extension,
+    Colors,
     Name,
 }
 
 impl Sort {
     pub fn by_name(self) -> bool {
-        self == Sort::Name
+        matches!(self, Sort::Name | Sort::Extension)
     }
 }
 

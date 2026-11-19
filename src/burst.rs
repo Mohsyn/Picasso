@@ -22,6 +22,12 @@ pub const DEFAULT_WINDOW: i64 = 10;
 /// How many of the 64 bits two shots of one group can differ in by default.
 pub const DEFAULT_DISTANCE: u32 = 12;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StackMode {
+    Time,
+    LookAlike,
+}
+
 /// The difference hash of a thumbnail.
 pub fn look(thumb: &RgbaImage) -> u64 {
     let grey = DynamicImage::ImageRgba8(thumb.clone()).into_luma8();
@@ -55,6 +61,52 @@ pub fn group(shots: &[Shot], window: i64, max_distance: u32) -> Vec<Vec<i64>> {
     let mut previous: Option<&Shot> = None;
     for shot in timed {
         let joins = previous.is_some_and(|before| shot.taken_at - before.taken_at <= window && distance(shot.look, before.look) <= max_distance);
+        if !joins && current.len() > 1 {
+            groups.push(std::mem::take(&mut current));
+        }
+        if !joins {
+            current.clear();
+        }
+        current.push(shot.id);
+        previous = Some(shot);
+    }
+    if current.len() > 1 {
+        groups.push(current);
+    }
+    groups
+}
+
+pub fn group_by_time(shots: &[Shot], window: i64) -> Vec<Vec<i64>> {
+    let mut timed: Vec<&Shot> = shots.iter().filter(|shot| shot.taken_at > 0).collect();
+    timed.sort_by_key(|shot| (shot.taken_at, shot.id));
+    let mut groups = Vec::new();
+    let mut current = Vec::new();
+    let mut previous: Option<&Shot> = None;
+    for shot in timed {
+        let separated = previous.is_some_and(|before| shot.taken_at - before.taken_at > window);
+        if separated && current.len() > 1 {
+            groups.push(std::mem::take(&mut current));
+        }
+        if separated {
+            current.clear();
+        }
+        current.push(shot.id);
+        previous = Some(shot);
+    }
+    if current.len() > 1 {
+        groups.push(current);
+    }
+    groups
+}
+
+pub fn group_by_look(shots: &[Shot], max_distance: u32) -> Vec<Vec<i64>> {
+    let mut ordered: Vec<&Shot> = shots.iter().collect();
+    ordered.sort_by_key(|shot| (shot.taken_at == 0, shot.taken_at, shot.id));
+    let mut groups = Vec::new();
+    let mut current = Vec::new();
+    let mut previous: Option<&Shot> = None;
+    for shot in ordered {
+        let joins = previous.is_some_and(|before| distance(shot.look, before.look) <= max_distance);
         if !joins && current.len() > 1 {
             groups.push(std::mem::take(&mut current));
         }
@@ -110,6 +162,17 @@ mod tests {
         assert_eq!(group(&shots, DEFAULT_WINDOW, DEFAULT_DISTANCE), vec![vec![1, 2, 3], vec![5, 6]]);
         assert_eq!(group(&shots, 120, DEFAULT_DISTANCE), vec![vec![1, 2, 3, 4], vec![5, 6]], "a wider window");
         assert_eq!(group(&shots, DEFAULT_WINDOW, 0), Vec::<Vec<i64>>::new(), "only identical looks");
+    }
+
+    #[test]
+    fn stack_modes_group_time_or_appearance() {
+        let shots = [
+            Shot { id: 1, taken_at: 100, look: 0 },
+            Shot { id: 2, taken_at: 200, look: 1 },
+            Shot { id: 3, taken_at: 1_000, look: 2 },
+        ];
+        assert_eq!(group_by_time(&shots, 300), vec![vec![1, 2]]);
+        assert_eq!(group_by_look(&shots, 1), vec![vec![1, 2, 3]]);
     }
 }
 

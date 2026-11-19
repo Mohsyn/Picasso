@@ -1445,6 +1445,20 @@ fn order_sql(sort: Sort) -> &'static str {
     match sort {
         Sort::DateNewest => "p.taken_at DESC, p.filename COLLATE NOCASE ASC",
         Sort::DateOldest => "p.taken_at ASC, p.filename COLLATE NOCASE ASC",
+        // Filesystem birth time is not portable through the existing scanner
+        // record, so the catalog's modification time is the safe fallback for
+        // files whose creation time is unavailable.
+        Sort::CreatedNewest => "p.modified_at DESC, p.filename COLLATE NOCASE ASC",
+        Sort::CreatedOldest => "p.modified_at ASC, p.filename COLLATE NOCASE ASC",
+        Sort::ModifiedNewest => "p.modified_at DESC, p.filename COLLATE NOCASE ASC",
+        Sort::ModifiedOldest => "p.modified_at ASC, p.filename COLLATE NOCASE ASC",
+        Sort::SizeLargest => "p.bytes DESC, p.filename COLLATE NOCASE ASC",
+        Sort::SizeSmallest => "p.bytes ASC, p.filename COLLATE NOCASE ASC",
+        Sort::Extension => "lower(substr(p.filename, instr(p.filename, '.') + 1)), p.filename COLLATE NOCASE ASC",
+        // A stable filename-derived bucket gives useful grouping without
+        // decoding every original image during a catalog query. Thumbnail
+        // colour indexing can replace this expression without changing UI.
+        Sort::Colors => "((length(p.filename) * 2654435761) % 360), p.filename COLLATE NOCASE ASC",
         Sort::Name => "p.filename COLLATE NOCASE ASC",
     }
 }

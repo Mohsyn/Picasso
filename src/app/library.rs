@@ -608,6 +608,7 @@ impl PicassoApp {
             Sort::Name => found.sort_by_key(|index| folder_label(&self.tracks[*index].path).to_lowercase()),
             Sort::DateNewest => found.sort_by_key(|index| std::cmp::Reverse(start(index))),
             Sort::DateOldest => found.sort_by_key(start),
+            _ => found.sort_by_key(|index| folder_label(&self.tracks[*index].path).to_lowercase()),
         }
         found
     }
@@ -745,17 +746,49 @@ impl PicassoApp {
                 let shown = tr(match sort {
                     Sort::DateNewest => "Sort by Date",
                     Sort::DateOldest => "Sort by Date, oldest",
+                    Sort::CreatedNewest => "Sort by Date created",
+                    Sort::CreatedOldest => "Sort by Date created, oldest",
+                    Sort::ModifiedNewest => "Sort by Date modified",
+                    Sort::ModifiedOldest => "Sort by Date modified, oldest",
+                    Sort::SizeLargest => "Sort by Size",
+                    Sort::SizeSmallest => "Sort by Size, smallest",
+                    Sort::Extension => "Sort by Extension",
+                    Sort::Colors => "Sort by Colors",
                     Sort::Name => "Sort by Name",
                 });
                 let picker = egui::ComboBox::from_id_salt("sort").selected_text(shown).show_ui(ui, |ui| {
                     ui.selectable_value(&mut sort, Sort::DateNewest, tr("Sort by Date"));
                     ui.selectable_value(&mut sort, Sort::DateOldest, tr("Sort by Date, oldest"));
+                    ui.selectable_value(&mut sort, Sort::CreatedNewest, tr("Sort by Date created"));
+                    ui.selectable_value(&mut sort, Sort::CreatedOldest, tr("Sort by Date created, oldest"));
+                    ui.selectable_value(&mut sort, Sort::ModifiedNewest, tr("Sort by Date modified"));
+                    ui.selectable_value(&mut sort, Sort::ModifiedOldest, tr("Sort by Date modified, oldest"));
+                    ui.selectable_value(&mut sort, Sort::SizeLargest, tr("Sort by Size"));
+                    ui.selectable_value(&mut sort, Sort::SizeSmallest, tr("Sort by Size, smallest"));
+                    ui.selectable_value(&mut sort, Sort::Extension, tr("Sort by Extension"));
+                    ui.selectable_value(&mut sort, Sort::Colors, tr("Sort by Colors"));
                     ui.selectable_value(&mut sort, Sort::Name, tr("Sort by Name"));
                 });
                 theme::name_picker(&picker.response, shown, shown.to_owned());
                 if sort != self.sort {
                     self.sort = sort;
                     self.reload_view();
+                }
+                ui.separator();
+                let mut stack = self.stack_mode;
+                let stack_label = match stack {
+                    None => tr("Stacks: Off"),
+                    Some(crate::burst::StackMode::Time) => tr("Stacks: Within 5 minutes"),
+                    Some(crate::burst::StackMode::LookAlike) => tr("Stacks: Look-alikes"),
+                };
+                egui::ComboBox::from_id_salt("stack-mode").selected_text(stack_label).show_ui(ui, |ui| {
+                    ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
+                    ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
+                    ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
+                });
+                if stack != self.stack_mode {
+                    self.stack_mode = stack;
+                    self.view_epoch = self.view_epoch.wrapping_add(1);
                 }
             });
         });

@@ -309,6 +309,7 @@ pub struct PicassoApp {
     index_of: HashMap<i64, usize>,
     nav: Nav,
     sort: Sort,
+    stack_mode: Option<crate::burst::StackMode>,
     /// Visible filter independent of the photo ordering.
     edited_only: bool,
     search: String,
@@ -657,6 +658,7 @@ impl PicassoApp {
             index_of: HashMap::new(),
             nav: Nav::Library,
             sort: Sort::DateNewest,
+            stack_mode: None,
             edited_only: false,
             search: String::new(),
             search_due: None,
