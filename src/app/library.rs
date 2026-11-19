@@ -778,11 +778,12 @@ impl PicassoApp {
         });
         ui.horizontal_wrapped(|ui| {
             let mut stack = self.stack_mode;
-            egui::ComboBox::from_id_salt("stack-mode").selected_text(tr("Stacks")).show_ui(ui, |ui| {
+            let picker = egui::ComboBox::from_id_salt("stack-mode").selected_text(tr("Stacks")).show_ui(ui, |ui| {
                 ui.selectable_value(&mut stack, None, tr("Stacks: Off"));
                 ui.selectable_value(&mut stack, Some(crate::burst::StackMode::Time), tr("Stacks: Within 5 minutes"));
                 ui.selectable_value(&mut stack, Some(crate::burst::StackMode::LookAlike), tr("Stacks: Look-alikes"));
             });
+            theme::name_picker(&picker.response, tr("Stacks"), tr("Stacks").to_owned());
             if stack != self.stack_mode {
                 self.stack_mode = stack;
                 self.view_epoch = self.view_epoch.wrapping_add(1);

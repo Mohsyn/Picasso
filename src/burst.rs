@@ -169,7 +169,7 @@ mod tests {
         let shots = [
             Shot { id: 1, taken_at: 100, look: 0 },
             Shot { id: 2, taken_at: 200, look: 1 },
-            Shot { id: 3, taken_at: 1_000, look: 2 },
+            Shot { id: 3, taken_at: 1_000, look: 3 },
         ];
         assert_eq!(group_by_time(&shots, 300), vec![vec![1, 2]]);
         assert_eq!(group_by_look(&shots, 1), vec![vec![1, 2, 3]]);
